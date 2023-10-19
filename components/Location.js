@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import {View, Text, TouchableOpacity, PermissionsAndroid} from 'react-native';
+import {View, Text, TouchableOpacity, PermissionsAndroid, StyleSheet} from 'react-native';
 
 import MapView, { LocalTile, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
@@ -7,14 +7,16 @@ import database from '@react-native-firebase/database';
 import firebase from '@react-native-firebase/app';
 import { firebaseConfig } from './../firebaseConfig';
 
-const Location = () => {
+const Location = ({ route, navigation }) => {
+
+    const { userRole } = route.params;
+    console.log('------userRole------', userRole);
 
     const [locationLatitude, setLatitude] = useState(30.706415978844426);
     const [locationLongitude, setLongitude] = useState(76.70904955522218);
 
     useEffect(() => {
         requestLocationPermission();
-        // getCurrentLocation();
     }, []);
 
     const requestLocationPermission = async () => {
@@ -24,6 +26,7 @@ const Location = () => {
           );
           if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             console.log('You can use the Location');
+            userRole == "Admin" ? getDriversLocation() : setCurrentLocation();
           } else {
             console.log('Location permission denied');
           }
@@ -32,7 +35,7 @@ const Location = () => {
         }
     }
 
-    const getCurrentLocation = () => {
+    const setCurrentLocation = () => {
         Geolocation.getCurrentPosition(
           async (position) => {
             setLatitude(position.coords.latitude);
@@ -74,7 +77,11 @@ const Location = () => {
       const getDriversLocation = async () => {
         try {
           const db = firebase.database()
-          // let data = await db.ref("drivers/1").once('value');
+          db.ref("drivers/1").on('value', snapshot => {
+            console.log('-----data----', snapshot.val());
+            setLatitude(snapshot.val().latitude);
+            setLongitude(snapshot.val().longitude);
+          });
         } catch (e) {
           console.log('----e---', e);
         }
@@ -83,22 +90,38 @@ const Location = () => {
     return (
         <View style={{flex: 1}}>
             <MapView
-            style={{width: '100%', height: '100%'}}
-            initialRegion={{
-                latitude: locationLatitude, 
-                longitude: locationLongitude,
-                latitudeDelta: 0.015,
-                longitudeDelta: 0.0121,
-            }}
+              style={{width: '100%', height: '100%'}}
+              initialRegion={{
+                  latitude: locationLatitude, 
+                  longitude: locationLongitude,
+                  latitudeDelta: 0.015,
+                  longitudeDelta: 0.0121,
+              }}
             >
-          <Marker coordinate={{latitude: locationLatitude, longitude: locationLongitude}} />
+              <Marker coordinate={{latitude: locationLatitude, longitude: locationLongitude}} />
             </MapView>
-            <TouchableOpacity style={{width: '90%', height: 60, alignSelf: 'center', position: 'absolute', bottom: 20, backgroundColor: 'grey', justifyContent: 'center', alignItems: 'center'}}
-                            onPress={() => getCurrentLocation()}>
-                <Text style={{color: 'white'}}>Get Current Location</Text>
+            <TouchableOpacity style={styles.button}
+                            onPress={() => {
+                              userRole == 'Admin' ? getDriversLocation() : setCurrentLocation()
+                            }}>
+                <Text style={{color: 'white', fontSize: 16}}>{userRole == 'Admin' ? 'Fetch Driver Location' : 'Send Driver Location'}</Text>
             </TouchableOpacity>
       </View>
     )
 }
+
+const styles = StyleSheet.create({
+  button: {
+    width: '90%', 
+    height: 60, 
+    alignSelf: 'center', 
+    position: 'absolute', 
+    bottom: 20, 
+    backgroundColor: 'grey', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderRadius: 30
+  }
+});
 
 export default Location;
