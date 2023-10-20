@@ -12,25 +12,15 @@ const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('');
-    // const [initializing, setInitializing] = useState(true);
-    // const [user, setUser] = useState();
     const roles = ["Admin", "Driver"];
 
-    // function onAuthStateChanged(user) {
-    //     setUser(user);
-    //     if (initializing) setInitializing(false);
-    // }
-
-    // useEffect(() => {
-    //     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    //     return subscriber; // unsubscribe on unmount
-    // }, []);
 
     const handleLogin = async () => {
         try{
             if(email !== '' && password !== '' && role !== '') {
                 const isUserLoggedIn = await auth().signInWithEmailAndPassword(email, password);
-                console.log('-------isUserLoggedIn----', isUserLoggedIn);
+                setEmail('');
+                setPassword('');
                 navigation.navigate('Location', { userRole: role })
             } else {
                 Alert.alert('Please enter valid email and password');
@@ -46,13 +36,15 @@ const LoginScreen = ({ navigation }) => {
         try{
             if (email !== '' && password !== '' && role !== '') {
                 const isUserCreated = await auth().createUserWithEmailAndPassword(email, password);
-                console.log('----isUserCreated', isUserCreated);
+                setEmail('');
+                setPassword('');
                 navigation.navigate('Location', {userRole: role});
             } else {
                 Alert.alert('Please fill all required fields.');
             }
         } catch (e) {
             console.log('-----signup---error--', e);
+            Alert.alert(e);
         }
     };
 
@@ -111,9 +103,6 @@ const styles = StyleSheet.create({
     view: {
         paddingVertical: 10,
         paddingHorizontal: 10,
-        // height: '30%',
-        // alignItems: 'center',
-        // justifyContent: 'center'
     },
     numberInput: {
         borderWidth: 1,
@@ -133,12 +122,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     button: {
-        height: 60,
-        marginTop: 100,
+        height: 55,
+        marginVertical: 10,
         backgroundColor: '#2897e0',
         borderRadius: 4,
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        borderRadius: 28
     },
     dropdownContainer: {
         height: 60,
@@ -146,7 +136,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 4,
         borderColor: 'grey',
-        // marginHorizontal: 15,
         marginVertical: 5
     }
 });

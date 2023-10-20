@@ -1,22 +1,45 @@
 import React, {useState, useEffect} from "react";
-import {View, Text, TouchableOpacity, PermissionsAndroid, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, PermissionsAndroid, StyleSheet, BackHandler, Alert} from 'react-native';
+import { StackActions } from '@react-navigation/native';
 
 import MapView, { LocalTile, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
 import database from '@react-native-firebase/database';
 import firebase from '@react-native-firebase/app';
 import { firebaseConfig } from './../firebaseConfig';
+import auth from '@react-native-firebase/auth';
 
 const Location = ({ route, navigation }) => {
 
     const { userRole } = route.params;
-    console.log('------userRole------', userRole);
 
     const [locationLatitude, setLatitude] = useState(30.706415978844426);
     const [locationLongitude, setLongitude] = useState(76.70904955522218);
 
     useEffect(() => {
         requestLocationPermission();
+
+        const backAction = () => {
+          Alert.alert('Hold on!', 'Are you sure you want to logout?', [
+            {
+              text: 'Cancel',
+              onPress: () => null,
+              style: 'cancel',
+            },
+            {text: 'YES', onPress: () => auth().signOut().then(() => {
+              navigation.dispatch(StackActions.popToTop());
+              console.log('User signed out!')
+            })},
+          ]);
+          return true;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          backAction,
+        );
+
+        return () => backHandler.remove();
     }, []);
 
     const requestLocationPermission = async () => {
@@ -78,7 +101,6 @@ const Location = ({ route, navigation }) => {
         try {
           const db = firebase.database()
           db.ref("drivers/1").on('value', snapshot => {
-            console.log('-----data----', snapshot.val());
             setLatitude(snapshot.val().latitude);
             setLongitude(snapshot.val().longitude);
           });
